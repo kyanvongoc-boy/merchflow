@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>MerchFlow · PDF</title>
+  <link rel="stylesheet" href="/document.css">
+  <script src="/document.js" defer></script>
+</head>
+<body>
+  <header>
+    <a id="back" href="/workspace#documents">← Thư viện</a>
+    <div class="identity"><strong>MerchFlow · ICM</strong><h1 id="title">Đang mở tài liệu…</h1></div>
+    <a id="download" hidden download>↓ PDF</a>
+    <button id="language" aria-label="Change language">EN</button>
+  </header>
+  <nav id="toolbar" hidden aria-label="Document controls">
+    <button id="previous">←</button><label><span id="pageLabel">Trang</span> <select id="page"></select></label><span id="total"></span><button id="next">→</button>
+    <span class="separator"></span><button id="zoomOut">−</button><button id="fit">Vừa chiều rộng</button><button id="zoomIn">+</button><output id="zoom">100%</output>
+  </nav>
+  <p id="status" role="status">Đang tải…</p>
+  <main id="content" hidden>
+    <div id="viewport" tabindex="0"><img id="original" alt="" /></div>
+    <details><summary id="textLabel">Văn bản trích xuất của trang này</summary><pre id="text"></pre></details>
+  </main>
+</body>
+</html>

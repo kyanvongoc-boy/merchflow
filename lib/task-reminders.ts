@@ -1,0 +1,2 @@
+import {reminderSummary} from '@/public/task-reminder-core.mjs';
+export async function readTaskReminders(db:any,uid:string){const rows=await db.prepare("SELECT * FROM records WHERE owner=? AND kind='task' ORDER BY updated_at DESC").bind(uid).all();const tasks=rows.results.map((r:any)=>({...r,payload:JSON.parse(r.payload)}));return Response.json({tasks,reminders:reminderSummary(tasks),syncedAt:new Date().toISOString()},{headers:{'Cache-Control':'private,no-store','X-Content-Type-Options':'nosniff'}})}

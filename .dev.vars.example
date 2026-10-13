@@ -1,0 +1,10 @@
+# Copy to .dev.vars for local development. Never commit filled values.
+# Google OAuth needs an HTTPS deployment and registered redirect URI.
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+GOOGLE_TOKEN_ENCRYPTION_KEY=""
+GOOGLE_REDIRECT_URI=""
+# Optional Sites-native Gmail connector. Direct Google OAuth does not need it.
+GMAIL_CONNECTOR_ID=""
+# At least 32 random characters; required for unattended daily endpoints.
+DAILY_WORKER_SECRET=""
