@@ -1,3 +1,4 @@
+import { resolveAutomation,assertGeneratedRecords,summaryStatements } from '@/lib/automation';
 import {checkGmailMailbox,gmailConnector} from '@/lib/mailboxes';
 import {reminderSummary} from '@/public/task-reminder-core.mjs';
 import { prepareDailyTasks } from '@/lib/tasks';
@@ -20,7 +21,9 @@ const list=(v:any,max=30)=>Array.isArray(v)&&v.length<=max&&v.every(x=>typeof x=
 export function validateOperation(kind:string,p:any,fail:(code:string)=>never){
  const text=(key:string,min=1)=>{if(typeof p[key]!=='string'||p[key].trim().length<min)fail('required_'+key)};
  if(kind==='buyer'){text('name');text('email');if(!emailPattern.test(p.email))fail('invalid_email');if(!['new','active','archived'].includes(p.status))fail('invalid_status');p.email=p.email.toLowerCase().trim()}
- if(kind==='intake'){text('title',3);if(!templates.includes(p.template))fail('invalid_template');if(!['draft','confirmed'].includes(p.status))fail('invalid_status');if(!object(p.values)||Object.keys(p.values).length>50||Object.values(p.values).some(v=>typeof v!=='string'||v.length>12000))fail('invalid_input')}
+ if(kind==='intake'){text('title',3);if(!templates.includes(p.template))fail('invalid_template');if(!['draft','confirmed'].includes(p.status))fail('invalid_status');if(!object(p.values)||Object.keys(p.values).length>50||Object.values(p.values).some(v=>typeof v!=='string'||v.length>12000))fail('invalid_input');
+  if(p.status==='confirmed'){const required:Record<string,string[]>={inquiry:['product','quantity'],quotation:['style','quantity','price','terms'],sample:['style','type','decision'],material:['code','spec','quantity'],production:['po','quantity','actual'],quality:['po','type','plan','sampleSize','decision']};for(const key of required[p.template])if(!p.values[key]?.trim())fail('required_'+key);if(!Array.isArray(p.sourceIds)||!p.sourceIds.length)fail('evidence_required');}
+ }
  if(kind==='workbook'){text('title',3);if(!templates.includes(p.template)||!zones.includes(p.zone))fail('invalid_template');const counts:Record<string,number>={inquiry:8,quotation:7,sample:7,material:8,production:8,quality:8};const numeric:Record<string,number[]>={inquiry:[2],quotation:[3,4],sample:[3],material:[4,5],production:[2,3],quality:[2,3]};if(!Array.isArray(p.rows)||p.rows.length>500||p.rows.some((r:any)=>!Array.isArray(r)||r.length!==counts[p.template]||r.some((v:any)=>typeof v!=='string'||v.length>2000)))fail('invalid_rows');for(const row of p.rows)for(const col of numeric[p.template])if(row[col]!==''&&(!/^\d+(\.\d+)?$/.test(row[col])||!Number.isFinite(Number(row[col]))))fail('invalid_qty');if(p.currency&&!['USD','VND','AUD','EUR','GBP'].includes(p.currency))fail('invalid_currency')}
  if(kind==='compose'){text('subject');text('body');text('to');for(const key of ['to','cc','bcc'])if(p[key]){const emails=p[key].split(/[;,]/).map((v:string)=>v.trim()).filter(Boolean);if(emails.length>20||emails.some((v:string)=>!emailPattern.test(v)))fail('invalid_email');p[key]=emails.join(', ')}if(p.subject.length>250||/[\r\n]/.test(p.subject))fail('invalid_input');if(p.attachmentIds&&!list(p.attachmentIds,5))fail('invalid_attachment')}
  if(kind==='request'){text('title');text('messageId');text('buyerEmail');text('summary');if(!emailPattern.test(p.buyerEmail))fail('invalid_email');if(!['new','reviewing','confirmed','closed'].includes(p.status)||!['normal','high','urgent'].includes(p.priority))fail('invalid_status');for(const k of ['requirements','missingInfo','nextActions'])if(p[k]&&!list(p[k]))fail('invalid_input')}
@@ -37,7 +40,7 @@ const html=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 // their own scheduler data; service access grants no provider consent.
 export async function dailyWorker(req:Request,db:any){
  if(req.headers.get('Origin')&&req.headers.get('Origin')!==new URL(req.url).origin)return response({error:'invalid_origin'},403);
- const settings=await db.prepare("SELECT * FROM records WHERE id='merchflow-automation-config' AND kind='automation'").first();
+ const settings=await resolveAutomation(req,db);
  if(!settings)return response({error:'setup_required'},409);
  const cfg=JSON.parse(settings.payload),owner=settings.owner;let mailSource='chatgpt';
  const visitor=req.headers.get('oai-authenticated-user-id');if(visitor&&visitor!==owner)return response({error:'not_found'},404);
@@ -51,10 +54,10 @@ export async function dailyWorker(req:Request,db:any){
  if(cfg.enabled!=='true')return response({error:'automation_disabled'},409);
  let data:any;try{const raw=await req.text();if(raw.length>1800000)throw Error();data=JSON.parse(raw)}catch{return response({error:'invalid_json'},400)}
  if(!/^\d{4}-\d{2}-\d{2}$/.test(data.day||'')||Number.isNaN(Date.parse(data.day))||new Date(data.day).toISOString().slice(0,10)!==data.day||!Array.isArray(data.items)||data.items.length>25||data.mailbox!==cfg.mailbox||!list(data.coverage?.queries,30)||typeof data.coverage?.complete!=='boolean')return response({error:'invalid_batch'},400);
- const stamp=new Date().toISOString(),batch:any[]=[],inserted:string[]=[],skipped:string[]=[];
+ const stamp=new Date().toISOString(),batch:any[]=[],inserted:string[]=[],skipped:string[]=[],generated:Array<{id:string,kind:string}>=[];let digestMutation=-1;
  const knownBuyers=await db.prepare("SELECT id,payload FROM records WHERE owner=? AND kind='buyer'").bind(owner).all();
  const buyerMap=new Map<string,string>(knownBuyers.results.map((r:any)=>[JSON.parse(r.payload).email.toLowerCase(),r.id]));
- const put=(id:string,kind:string,p:any)=>{const json=JSON.stringify(p);batch.push(db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,owner,kind,json,stamp,stamp));batch.push(db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM records WHERE id=? AND created_at=?)').bind(crypto.randomUUID(),owner,id,'create','Daily review','{}',json,stamp,id,stamp));};
+ const put=(id:string,kind:string,p:any)=>{generated.push({id,kind});const json=JSON.stringify(p);batch.push(db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,owner,kind,json,stamp,stamp));batch.push(db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE changes()=1').bind(crypto.randomUUID(),owner,id,'create','Daily review','{}',json,stamp));};
  for(const item of data.items){
   if(!object(item)||!emailPattern.test(item.buyerEmail||'')||!item.messageId||!item.summary||!item.source?.body||!item.source?.from||!item.source?.subject)return response({error:'missing_evidence'},400);
   if(String(item.messageId).length>128||String(item.threadId||'').length>128)return response({error:'invalid_id'},400);
@@ -73,24 +76,24 @@ export async function dailyWorker(req:Request,db:any){
   if(cfg.summaryMode==='draft'&&p.draftBody&&p.draftSubject)put('compose_'+await hash(owner+':'+cfg.mailbox+':'+item.messageId),'compose',{mailboxId:cfg.mailboxId||'',senderEmail:cfg.mailbox,subject:p.draftSubject,body:p.draftBody,to:buyerEmail,cc:'',bcc:'',buyerId,requestId:id,caseId:'',attachmentIds:[],sourceIds:[mailId]});
   inserted.push(id);
  }
- let taskResult:any;try{taskResult=await prepareDailyTasks(db,owner,cfg.mailbox,data,stamp)}catch(e:any){return response({error:e.message||'invalid_task_batch'},400)}
- if(taskResult)batch.push(...taskResult.statements);
-
- const digestId='digest_'+await hash(owner+':'+cfg.mailbox+':'+data.day),previous=await db.prepare('SELECT * FROM records WHERE id=? AND owner=?').bind(digestId,owner).first();
+ let taskResult:any;try{taskResult=await prepareDailyTasks(db,owner,cfg.mailbox,data,stamp)}catch(e:any){return response({error:e.message||'invalid_task_batch'},e.message==='generated_id_conflict'?409:400)}
+ if(taskResult){taskResult.batchOffset=batch.length;batch.push(...taskResult.statements);}
+ const digestId='digest_'+await hash(owner+':'+cfg.mailbox+':'+data.day),previous=await db.prepare("SELECT * FROM records WHERE id=? AND owner=? AND kind='digest'").bind(digestId,owner).first();
  if(!data.taskOnly&&cfg.summaryMode==='draft'&&data.digestEmail){
   const draft={mailboxId:cfg.mailboxId||'',senderEmail:cfg.mailbox,subject:safeText(data.digestEmail.subject,250),body:safeText(data.digestEmail.body),to:cfg.mailbox,cc:'',bcc:'',buyerId:'',requestId:'',caseId:'',attachmentIds:[],sourceIds:[]};
   try{validateOperation('compose',draft,()=>{throw Error()})}catch{return response({error:'invalid_digest_email'},400)}
-
   put('compose_digest_'+await hash(owner+':'+cfg.mailbox+':'+data.day),'compose',draft);
  }
  if(data.taskOnly&&(!taskResult||data.items.length))return response({error:'invalid_task_batch'},400);
  if(!data.taskOnly){
  const digest={mailboxId:cfg.mailboxId||'',mailboxEmail:cfg.mailbox,day:data.day,title:safeText(data.title||'Daily customer requests',250),summary:safeText(data.summary),requestIds:[...new Set([...(previous?JSON.parse(previous.payload).requestIds||[]:[]),...inserted,...skipped])],coverage:data.coverage,status:data.coverage.complete===true?'complete':'partial',completedAt:stamp};
- const json=JSON.stringify(digest);batch.push(db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,version=records.version+1,updated_at=excluded.updated_at').bind(digestId,owner,'digest',json,stamp,stamp));
- batch.push(db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) VALUES(?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),owner,digestId,previous?'update':'create','Daily review',previous?.payload||'{}',json,stamp));
+ generated.push({id:digestId,kind:'digest'});digestMutation=batch.length+1;batch.push(...summaryStatements(db,owner,digestId,'digest',digest,'Daily review',stamp));
  }
  // D1 batches are atomic; no watermark advances when the batch fails.
- await db.batch(batch);
+ try{await assertGeneratedRecords(db,owner,generated);}catch{return response({error:'generated_id_conflict'},409)}
+ const committed=await db.batch(batch);
+ if(digestMutation>=0&&!committed[digestMutation].meta.changes)return response({error:'generated_id_conflict'},409);
+ if(taskResult?.mutationIndex!==undefined&&!committed[taskResult.batchOffset+taskResult.mutationIndex]?.meta.changes)return response({error:'generated_id_conflict'},409);
  return response({ok:true,inserted,skipped,digestId:data.taskOnly?null:digestId,tasks:taskResult?{inserted:taskResult.inserted,skipped:taskResult.skipped,runId:taskResult.runId}:null});
 }
 
@@ -103,10 +106,12 @@ export async function operationEndpoint(req:Request,db:any,bucket:any,uid:string
   if(typeof input.base64!=='string'||input.base64.length>7000000)return response({error:'too_large'},413);
   let bytes:Uint8Array;try{bytes=Uint8Array.from(atob(input.base64),c=>c.charCodeAt(0))}catch{return response({error:'invalid_file'},400)}
   if(bytes.length<50||bytes[0]!==80||bytes[1]!==75)return response({error:'invalid_file'},400);
-  const id='file_'+await hash(book.id+':'+book.version);const old=await db.prepare('SELECT * FROM records WHERE id=? AND owner=?').bind(id,uid).first();if(old)return response({...old,payload:JSON.parse(old.payload)});
-  const bp=JSON.parse(book.payload),stamp=new Date().toISOString(),key=uid+'/'+id+'.xlsx',p={name:(book.kind==='quotation'?bp.number+'-'+bp.revision+'-v'+book.version:bp.title).replace(/[\\/:*?"<>|]/g,'-').slice(0,120)+'.xlsx',key,workbookId:book.kind==='workbook'?book.id:'',quotationId:book.kind==='quotation'?book.id:'',workbookVersion:book.version,caseId:bp.caseId||'',buyerId:bp.buyerId||'',zone:book.kind==='quotation'?'quotation':bp.zone,bytes:bytes.length,driveStatus:'not_connected'};
+  const id='file_'+await hash(book.id+':'+book.version);try{await assertGeneratedRecords(db,uid,[{id,kind:'asset'}]);}catch{return response({error:'generated_id_conflict'},409)}const old=await db.prepare("SELECT * FROM records WHERE id=? AND owner=? AND kind='asset'").bind(id,uid).first();if(old)return response({...old,payload:JSON.parse(old.payload)});
+  const contentHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes.slice().buffer)),b=>b.toString(16).padStart(2,'0')).join('');
+  const bp=JSON.parse(book.payload),stamp=new Date().toISOString(),key=uid+'/'+id+'/'+contentHash+'.xlsx',p={name:(book.kind==='quotation'?bp.number+'-'+bp.revision+'-v'+book.version:bp.title).replace(/[\\/:*?"<>|]/g,'-').slice(0,120)+'.xlsx',key,workbookId:book.kind==='workbook'?book.id:'',quotationId:book.kind==='quotation'?book.id:'',workbookVersion:book.version,caseId:bp.caseId||'',buyerId:bp.buyerId||'',zone:book.kind==='quotation'?'quotation':bp.zone,bytes:bytes.length,sha256:contentHash,driveStatus:'not_connected'};
   await bucket.put(key,bytes,{httpMetadata:{contentType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}});
-  const json=JSON.stringify(p);await db.batch([db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,uid,'asset',json,stamp,stamp),db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) VALUES(?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),uid,id,'create',email,'{}',json,stamp)]);
+  const json=JSON.stringify(p);const saved=await db.batch([db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,uid,'asset',json,stamp,stamp),db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE changes()=1').bind(crypto.randomUUID(),uid,id,'create',email,'{}',json,stamp)]);
+  if(!saved[0].meta.changes){const winner=await db.prepare("SELECT * FROM records WHERE id=? AND owner=? AND kind='asset'").bind(id,uid).first();if(!winner)return response({error:'generated_id_conflict'},409);const winnerPayload=JSON.parse(winner.payload);if(winnerPayload.key!==key&&bucket.delete){try{await bucket.delete(key)}catch{}}return response({...winner,payload:winnerPayload});}
   return response({id,kind:'asset',version:1,payload:p,created_at:stamp,updated_at:stamp});
  }
  if(path==='gmail-draft'){

@@ -1,0 +1,26 @@
+/* Scoped installation UI; shared by the workspace and the installation guide. */
+.mf-install-page{margin:0;background:#151819;color:#edf0e9;font:15px/1.65 'Segoe UI',Arial,sans-serif;color-scheme:dark;min-height:100svh}
+.mf-install-page *,.mf-install-update *{box-sizing:border-box}
+.mf-install-wrap{width:min(1060px,100%);margin:auto;padding:30px max(22px,env(safe-area-inset-right)) 56px max(22px,env(safe-area-inset-left))}
+.mf-install-header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:56px}
+.mf-install-brand{display:flex;align-items:center;gap:12px;text-decoration:none!important;color:#edf0e9!important;font-weight:650;font-size:19px}
+.mf-install-brand img{border-radius:12px;width:42px;height:42px}.mf-install-header small{font-size:11px;color:#a6afaa;display:block;font-weight:400}
+.mf-install-page button,.mf-install-page a.mf-install-button,.mf-install-update button{font:inherit;min-height:44px;padding:10px 17px;border:1px solid #4b514d;border-radius:12px;background:#282d2e;color:#edf0e9;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.mf-install-page button:hover,.mf-install-page a.mf-install-button:hover,.mf-install-update button:hover{background:#343b37}
+.mf-install-page .mf-install-primary,.mf-install-update .mf-install-primary{background:#d4e8b0;color:#202425;border-color:#d4e8b0;font-weight:650}
+.mf-install-page .mf-install-primary:hover,.mf-install-update .mf-install-primary:hover{background:#e2efc9}
+.mf-install-page button:disabled{cursor:default;opacity:.7}
+.mf-install-page a:focus-visible,.mf-install-page button:focus-visible,.mf-install-update button:focus-visible{outline:2px solid #d4e8b0;outline-offset:4px}
+.mf-install-page [hidden],.mf-install-update [hidden]{display:none!important}
+.mf-install-hero{display:grid;grid-template-columns:minmax(0,1fr) 215px;gap:48px;align-items:center;margin-bottom:46px}
+.mf-install-eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:11px;font-weight:650;color:#bed39f;margin:0 0 16px}
+.mf-install-page h1{font-size:clamp(32px,5vw,49px);font-weight:550;line-height:1.15;letter-spacing:-1.6px;margin:0 0 20px;max-width:740px}
+.mf-install-lead{max-width:640px;font-size:16px;color:#b9c3bc;margin:0 0 24px}.mf-install-actions{display:flex;flex-wrap:wrap;gap:10px}.mf-install-mark{width:180px;height:180px;border-radius:42px;justify-self:center;box-shadow:0 16px 52px #0003}
+.mf-install-status{color:#c3d8aa;background:#242d24;border:1px solid #43513d;border-radius:12px;padding:12px 16px;font-size:14px;margin:18px 0 0;max-width:660px}
+.mf-install-summary{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px;color:#a6afaa;font-size:12px}.mf-install-summary span{padding:5px 10px;border:1px solid #393c3b;border-radius:8px}
+.mf-install-section-title{font-size:22px;font-weight:550;letter-spacing:-.5px;margin:0 0 18px}.mf-install-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mf-install-card{background:#202425;border:1px solid #393c3b;border-radius:18px;padding:25px;min-width:0}.mf-install-card h3{font-size:20px;line-height:1.3;font-weight:600;letter-spacing:-.3px;margin:0}.mf-install-card .mf-install-browser{font-size:12px;color:#a6afaa;margin:5px 0 20px}.mf-install-card ol{padding-left:22px;margin:0;color:#d0d7d0}.mf-install-card li{padding-left:5px;margin:9px 0}.mf-install-card li::marker{color:#b8cd9c;font-weight:600}.mf-install-card .mf-install-hint{color:#a6afaa;font-size:12px;border-top:1px solid #393c3b;padding-top:16px;margin:20px 0 0}.mf-install-card.is-current{border-color:#758565}
+.mf-install-information{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:34px;padding-top:30px;border-top:1px solid #393c3b}.mf-install-information h2{font-size:16px;font-weight:600;margin:0 0 8px}.mf-install-information p{color:#aeb8b1;font-size:13px;margin:0}.mf-install-footer{margin-top:36px;color:#9ca69f;font-size:12px}.mf-install-footer a{color:#d4e8b0}
+.mf-install-update{position:fixed;z-index:1500;inset:auto 20px max(20px,env(safe-area-inset-bottom)) auto;width:min(420px,calc(100vw - 40px));padding:19px;background:#252c27;color:#edf0e9;border:1px solid #647357;border-radius:16px;box-shadow:0 12px 44px #0006;font:14px/1.5 'Segoe UI',Arial,sans-serif}.mf-install-update p{margin:0 0 13px}.mf-install-update-actions{display:flex;flex-wrap:wrap;gap:9px}.mf-install-update button{font-size:13px;min-height:40px;padding:8px 12px}.mf-install-update-note{font-size:12px;color:#e2d6b5;margin:12px 0 0!important}.mf-install-update[hidden]{display:none!important}
+@media(max-width:700px){.mf-install-header{margin-bottom:38px}.mf-install-hero{grid-template-columns:1fr;gap:20px}.mf-install-mark{display:none}.mf-install-grid{grid-template-columns:1fr}.mf-install-information{grid-template-columns:1fr;gap:22px}.mf-install-card{padding:22px}.mf-install-wrap{padding-top:max(22px,env(safe-area-inset-top))}.mf-install-page h1{letter-spacing:-1px}.mf-install-header small{max-width:180px}.mf-install-update{inset:auto 12px max(12px,env(safe-area-inset-bottom)) 12px;width:auto}}
+@media(prefers-reduced-motion:reduce){.mf-install-page *,.mf-install-update *{scroll-behavior:auto!important;transition:none!important}}

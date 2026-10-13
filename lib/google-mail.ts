@@ -106,7 +106,11 @@ export async function googleDisconnect(db:any,uid:string,input:any){
  const old=JSON.parse(r.payload);if(old.connectionMode!=='google_oauth')return json({error:'invalid_input'},400);
  const secret=await db.prepare('SELECT encrypted_tokens FROM google_mail_tokens WHERE mailbox_id=? AND owner=?').bind(r.id,uid).first();
  const stamp=new Date().toISOString(),p={...old,enabled:'false',verifiedAt:'',connection:'disconnected',draftAccess:'false'},payload=JSON.stringify(p);
- const changed=await db.batch([db.prepare('UPDATE records SET payload=?,version=version+1,updated_at=? WHERE id=? AND owner=? AND version=?').bind(payload,stamp,r.id,uid,r.version),db.prepare('DELETE FROM google_mail_tokens WHERE mailbox_id=? AND owner=? AND EXISTS(SELECT 1 FROM records WHERE id=? AND owner=? AND version=? AND updated_at=?)').bind(r.id,uid,r.id,uid,r.version+1,stamp),db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM records WHERE id=? AND owner=? AND version=? AND updated_at=?)').bind(crypto.randomUUID(),uid,r.id,'google_disconnect',uid,r.payload,payload,stamp,r.id,uid,r.version+1,stamp)]);
+ const changed=await db.batch([
+  db.prepare('UPDATE records SET payload=?,version=version+1,updated_at=? WHERE id=? AND owner=? AND version=?').bind(payload,stamp,r.id,uid,r.version),
+  db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE changes()=1').bind(crypto.randomUUID(),uid,r.id,'google_disconnect',uid,r.payload,payload,stamp),
+  db.prepare('DELETE FROM google_mail_tokens WHERE mailbox_id=? AND owner=? AND changes()=1').bind(r.id,uid)
+ ]);
  if(!changed[0].meta.changes)return json({error:'version_conflict'},409);
  let revoked=false;try{if(secret){const tokens=await decrypt(secret.encrypted_tokens,uid+':'+r.id);const res=await googleFetch('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:tokens.refresh_token})});revoked=res.ok}}catch{}
  return json({ok:true,revoked});

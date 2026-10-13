@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="merchflow-offline" content="1.0">
+  <meta name="theme-color" content="#151819">
+  <meta name="robots" content="noindex">
+  <title>MerchFlow · Không có kết nối / Offline</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;background:#151819;color:#edf0e9;font:16px/1.65 'Segoe UI',Arial,sans-serif;padding:24px;padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}.card{max-width:510px;padding:38px;background:#202425;border:1px solid #393c3b;border-radius:24px}.top{display:flex;justify-content:space-between;align-items:center}.logo{width:56px;height:56px;border-radius:16px}h1{font-size:28px;line-height:1.2;letter-spacing:-.6px;margin:28px 0 16px}p{color:#b9c1bc;margin:12px 0}.note{border-top:1px solid #393c3b;padding-top:18px;font-size:14px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}a,button{font:inherit;border-radius:12px;padding:12px 18px;min-height:46px;border:1px solid #4b514d;text-decoration:none;background:#282d2e;color:#edf0e9;cursor:pointer}a{background:#d4e8b0;color:#202425;border-color:#d4e8b0;font-weight:600}button.language{padding:8px 12px;min-height:40px;font-size:13px}a:focus-visible,button:focus-visible{outline:2px solid #d4e8b0;outline-offset:4px}[hidden]{display:none!important}@media(max-width:420px){.card{padding:26px}h1{font-size:25px}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="top"><img class="logo" src="/icons/icon-192.png" width="56" height="56" alt="MerchFlow"><button class="language" id="offline-language" aria-label="Switch to English">EN</button></div>
+    <h1><span data-lang="vi">Tạm thời mất kết nối.</span><span data-lang="en" hidden>You're offline for now.</span></h1>
+    <p data-lang="vi">Hãy kiểm tra Wi-Fi hoặc dữ liệu di động, rồi mở lại không gian làm việc.</p>
+    <p data-lang="en" hidden>Check your Wi-Fi or mobile connection, then return to your workspace.</p>
+    <p class="note" data-lang="vi">Trang này không chứa email hoặc dữ liệu khách hàng. Chưa có thao tác nào được lưu hay đồng bộ từ trang này.</p>
+    <p class="note" data-lang="en" hidden>This page contains no emails or customer data. Nothing has been saved or synced from this page.</p>
+    <div class="actions"><a href="/workspace#tasks"><span data-lang="vi">Mở công việc</span><span data-lang="en" hidden>Open tasks</span></a><button id="offline-retry"><span data-lang="vi">Thử lại trang này</span><span data-lang="en" hidden>Retry this page</span></button></div>
+  </main>
+  <script>
+    (function(){var language='vi';try{language=localStorage.getItem('merchflow-language')==='en'?'en':'vi'}catch{}function render(){document.documentElement.lang=language;document.querySelectorAll('[data-lang]').forEach(function(el){el.hidden=el.dataset.lang!==language});var button=document.getElementById('offline-language');button.textContent=language==='vi'?'EN':'VI';button.setAttribute('aria-label',language==='vi'?'Switch to English':'Chuyển sang tiếng Việt')}document.getElementById('offline-language').onclick=function(){language=language==='vi'?'en':'vi';try{localStorage.setItem('merchflow-language',language)}catch{}render()};document.getElementById('offline-retry').onclick=function(){location.reload()};render()})();
+  </script>
+</body>
+</html>

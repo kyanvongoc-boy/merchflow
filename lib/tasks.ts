@@ -1,3 +1,4 @@
+import { assertGeneratedRecords,summaryStatements } from '@/lib/automation';
 export const taskFields=['title','caseId','due','ownerEmail','status','sourceIds','buyerId','description','priority','plannedDay','outcome','completedAt','completedBy','origin','messageId','threadId','receivedAt','mailboxEmail'];
 const day=(v:any)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
 const iso=(v:any)=>typeof v==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(v)&&Number.isFinite(Date.parse(v));
@@ -24,14 +25,14 @@ export async function prepareDailyTasks(db:any,owner:string,mailbox:string,data:
  if(!data.taskRun){if(data.tasks!==undefined)throw Error('task_window_required');return null;}
  const run=data.taskRun,items=data.tasks;
  if(!Array.isArray(items)||items.length>25||!iso(run.from)||!iso(run.to)||Date.parse(run.to)-Date.parse(run.from)!==86400000||Date.parse(run.to)>Date.parse(stamp)+300000||taskDay(run.to)!==data.day||typeof run.complete!=='boolean'||!Number.isInteger(run.scanned)||run.scanned<0||run.scanned>100000||!Array.isArray(run.queries)||run.queries.length>30||run.queries.some((q:any)=>typeof q!=='string'||q.length>1000))throw Error('invalid_task_window');
- const statements:any[]=[],inserted:string[]=[],skipped:string[]=[],seen=new Set<string>();
- const put=(id:string,kind:string,p:any)=>{const json=JSON.stringify(p);statements.push(db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,owner,kind,json,stamp,stamp));statements.push(db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM records WHERE id=? AND owner=? AND created_at=? AND version=1)').bind(crypto.randomUUID(),owner,id,'create','Daily email review','{}',json,stamp,id,owner,stamp));};
+ const statements:any[]=[],inserted:string[]=[],skipped:string[]=[],seen=new Set<string>(),generated:Array<{id:string,kind:string}>=[];
+ const put=(id:string,kind:string,p:any)=>{generated.push({id,kind});const json=JSON.stringify(p);statements.push(db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,owner,kind,json,stamp,stamp));statements.push(db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE changes()=1').bind(crypto.randomUUID(),owner,id,'create','Daily email review','{}',json,stamp));};
  for(const item of items){
   if(!item||typeof item!=='object'||typeof item.messageId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(item.messageId)||!iso(item.receivedAt)||Date.parse(item.receivedAt)<Date.parse(run.from)||Date.parse(item.receivedAt)>=Date.parse(run.to)||typeof item.title!=='string'||typeof item.description!=='string'||!item.description.trim()||['body','subject','from'].some(k=>typeof item.source?.[k]!=='string'||!item.source[k].trim()))throw Error('invalid_task_evidence');
   if(item.threadId&&(typeof item.threadId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(item.threadId)))throw Error('invalid_task_evidence');
   const id='task_mail_'+await hash(owner+':'+mailbox+':'+item.messageId);
   if(seen.has(id)){skipped.push(id);continue}seen.add(id);
-  const old=await db.prepare('SELECT id FROM records WHERE id=? AND owner=?').bind(id,owner).first();
+  await assertGeneratedRecords(db,owner,[{id,kind:'task'}]);const old=await db.prepare("SELECT id FROM records WHERE id=? AND owner=? AND kind='task'").bind(id,owner).first();
   if(old){skipped.push(id);continue}
   const p:any={title:item.title,description:item.description,status:'open',priority:item.priority||'normal',due:item.due||'',plannedDay:data.day,ownerEmail:mailbox,buyerId:item.buyerId||'',caseId:item.caseId||'',outcome:'',completedAt:'',completedBy:'',mailboxEmail:mailbox,origin:'email',messageId:item.messageId,threadId:item.threadId||'',receivedAt:item.receivedAt};
   validateTask(p,code=>{throw Error(code)});
@@ -41,10 +42,8 @@ export async function prepareDailyTasks(db:any,owner:string,mailbox:string,data:
   if(!match&&!data.items.some((request:any)=>request.messageId===item.messageId))put(mailId,'mail',{subject:text(item.source.subject,300),from:text(item.source.from,500),to:text(item.source.to,2000),date:item.receivedAt.slice(0,10),body:text(item.source.body),messageId:item.messageId,threadId:item.threadId||'',caseId:p.caseId,source:'gmail',sourceIds:[],mailboxEmail:mailbox});
   p.sourceIds=[mailId];put(id,'task',p);inserted.push(id);
  }
-
  const id='taskrun_'+await hash(owner+':'+mailbox+':'+data.day),old=await db.prepare("SELECT * FROM records WHERE id=? AND owner=? AND kind='taskRun'").bind(id,owner).first(),previous=old?JSON.parse(old.payload):{};
  const p={mailboxEmail:mailbox,day:data.day,from:run.from,to:run.to,complete:run.complete,scanned:run.scanned,queries:run.queries,notes:text(run.notes,10000),taskIds:[...new Set([...(previous.taskIds||[]),...inserted,...skipped])],completedAt:stamp};
- const json=JSON.stringify(p);statements.push(db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,version=records.version+1,updated_at=excluded.updated_at WHERE records.owner=excluded.owner').bind(id,owner,'taskRun',json,stamp,stamp));
- statements.push(db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) VALUES(?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),owner,id,old?'update':'create','Daily email review',old?.payload||'{}',json,stamp));
- return {statements,inserted,skipped,runId:id};
+ generated.push({id,kind:'taskRun'});const mutationIndex=statements.length+1;statements.push(...summaryStatements(db,owner,id,'taskRun',p,'Daily email review',stamp));
+ await assertGeneratedRecords(db,owner,generated);return {statements,inserted,skipped,runId:id,mutationIndex};
 }

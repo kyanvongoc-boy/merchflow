@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#151819">
+  <meta name="apple-mobile-web-app-title" content="MerchFlow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="robots" content="noindex">
+  <title>MerchFlow · Cài ứng dụng / Install</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/app-install.css">
+  <script src="/app-install.js" defer></script>
+</head>
+<body class="mf-install-page">
+  <main class="mf-install-wrap">
+    <header class="mf-install-header">
+      <a href="/workspace#tasks" class="mf-install-brand"><img src="/icons/icon-192.png" alt="" width="42" height="42"><span>MerchFlow<small><span data-install-lang="vi">Không gian làm việc nội bộ</span><span data-install-lang="en" hidden>Internal team workspace</span></small></span></a>
+      <button type="button" id="mf-install-language" aria-label="Switch to English">EN</button>
+    </header>
+    <section class="mf-install-hero" aria-labelledby="install-title">
+      <div>
+        <p class="mf-install-eyebrow"><span data-install-lang="vi">DESKTOP & MOBILE</span><span data-install-lang="en" hidden>DESKTOP & MOBILE</span></p>
+        <h1 id="install-title"><span data-install-lang="vi">Công việc ở ngay<br>màn hình của bạn.</span><span data-install-lang="en" hidden>Your workspace.<br>One tap away.</span></h1>
+        <p class="mf-install-lead" data-install-lang="vi">Thêm MerchFlow vào máy tính hoặc điện thoại để mở nhanh bằng biểu tượng riêng. Dùng cùng tài khoản và dữ liệu đã lưu trên máy chủ.</p>
+        <p class="mf-install-lead" data-install-lang="en" hidden>Add MerchFlow to your computer or phone for quick access from its own icon. Use the same account and records saved on the server.</p>
+        <div class="mf-install-actions"><button type="button" class="mf-install-primary" data-merchflow-install><span data-install-lang="vi">Cài MerchFlow</span><span data-install-lang="en" hidden>Install MerchFlow</span></button><a class="mf-install-button" href="/workspace#tasks"><span data-install-lang="vi">Mở công việc ↗</span><span data-install-lang="en" hidden>Open tasks ↗</span></a></div>
+        <p id="mf-install-status" class="mf-install-status" role="status" aria-live="polite" hidden></p>
+        <div class="mf-install-summary"><span data-install-lang="vi">Cài từ trình duyệt</span><span data-install-lang="en" hidden>Install from your browser</span><span data-install-lang="vi">Cần kết nối Internet</span><span data-install-lang="en" hidden>Internet connection required</span></div>
+      </div>
+      <img class="mf-install-mark" src="/icons/icon-512.png" alt="" width="180" height="180">
+    </section>
+    <section id="install-guides" aria-labelledby="install-guide-title" tabindex="-1">
+      <h2 class="mf-install-section-title" id="install-guide-title"><span data-install-lang="vi">Chọn thiết bị đang sử dụng</span><span data-install-lang="en" hidden>Choose your device</span></h2>
+      <div class="mf-install-grid">
+        <article class="mf-install-card" data-platform="windows"><h3>Windows</h3><p class="mf-install-browser">Microsoft Edge / Google Chrome</p><ol data-install-lang="vi"><li>Mở MerchFlow trong Edge hoặc Chrome và đăng nhập.</li><li>Bấm biểu tượng cài ứng dụng ở thanh địa chỉ, hoặc mở menu <strong>⋯ / ⋮ → Ứng dụng → Cài đặt</strong>.</li><li>Xác nhận cài đặt. Ghim MerchFlow vào Start hoặc thanh tác vụ nếu muốn.</li></ol><ol data-install-lang="en" hidden><li>Open MerchFlow in Edge or Chrome and sign in.</li><li>Use the install icon in the address bar, or open <strong>⋯ / ⋮ → Apps → Install</strong>.</li><li>Confirm installation. Pin MerchFlow to Start or the taskbar if you wish.</li></ol><p class="mf-install-hint" data-install-lang="vi">Tên mục có thể khác theo phiên bản trình duyệt hoặc chính sách của công ty.</p><p class="mf-install-hint" data-install-lang="en" hidden>Menu names may vary with your browser version or company policy.</p></article>
+        <article class="mf-install-card" data-platform="mac"><h3>Mac</h3><p class="mf-install-browser">Safari / Google Chrome</p><ol data-install-lang="vi"><li>Trong Safari trên macOS Sonoma 14 trở lên, mở MerchFlow.</li><li>Chọn <strong>Tệp → Thêm vào Dock</strong> hoặc nút Chia sẻ → Thêm vào Dock.</li><li>Mở biểu tượng mới trong Dock và đăng nhập nếu được yêu cầu.</li></ol><ol data-install-lang="en" hidden><li>Open MerchFlow in Safari on macOS Sonoma 14 or later.</li><li>Choose <strong>File → Add to Dock</strong>, or Share → Add to Dock.</li><li>Open the new Dock icon and sign in if prompted.</li></ol><p class="mf-install-hint" data-install-lang="vi">Với Chrome, dùng nút cài ở thanh địa chỉ hoặc menu. Phiên đăng nhập trong ứng dụng Safari được quản lý riêng.</p><p class="mf-install-hint" data-install-lang="en" hidden>In Chrome, use its address-bar install button or menu. Safari web apps manage their own sign-in session.</p></article>
+        <article class="mf-install-card" data-platform="android"><h3>Android</h3><p class="mf-install-browser">Google Chrome</p><ol data-install-lang="vi"><li>Mở đường dẫn MerchFlow bằng Chrome và đăng nhập.</li><li>Mở menu <strong>⋮ → Thêm vào màn hình chính → Cài đặt</strong>, hoặc bấm Cài MerchFlow phía trên.</li><li>Xác nhận rồi mở MerchFlow từ màn hình chính hoặc danh sách ứng dụng.</li></ol><ol data-install-lang="en" hidden><li>Open the MerchFlow link in Chrome and sign in.</li><li>Choose <strong>⋮ → Add to Home screen → Install</strong>, or use Install MerchFlow above.</li><li>Confirm, then open MerchFlow from your home screen or app list.</li></ol><p class="mf-install-hint" data-install-lang="vi">Nếu đường dẫn đang mở trong ứng dụng chat, hãy chọn mở bằng Chrome trước.</p><p class="mf-install-hint" data-install-lang="en" hidden>If the link opened inside a chat app, open it in Chrome first.</p></article>
+        <article class="mf-install-card" data-platform="ios"><h3>iPhone / iPad</h3><p class="mf-install-browser">Safari</p><ol data-install-lang="vi"><li>Mở đường dẫn MerchFlow trong Safari và đăng nhập.</li><li>Bấm <strong>Chia sẻ → Thêm vào Màn hình chính</strong>. Có thể cần cuộn trong bảng Chia sẻ.</li><li>Nếu có lựa chọn <strong>Mở dưới dạng ứng dụng web</strong>, hãy bật. Bấm Thêm rồi mở biểu tượng MerchFlow.</li></ol><ol data-install-lang="en" hidden><li>Open the MerchFlow link in Safari and sign in.</li><li>Tap <strong>Share → Add to Home Screen</strong>. You may need to scroll in the share sheet.</li><li>If shown, turn on <strong>Open as Web App</strong>. Tap Add, then open the MerchFlow icon.</li></ol><p class="mf-install-hint" data-install-lang="vi">iPhone không có hộp thoại cài tự động giống Chrome. Khi kết nối Gmail, làm theo màn hình đăng nhập Google được mở.</p><p class="mf-install-hint" data-install-lang="en" hidden>iPhone uses the Share menu instead of Chrome's automatic install prompt. For Gmail, follow the Google sign-in screen that opens.</p></article>
+      </div>
+    </section>
+    <section class="mf-install-information" aria-label="Thông tin sử dụng / Usage information">
+      <div><h2><span data-install-lang="vi">Lưu dữ liệu an toàn</span><span data-install-lang="en" hidden>Keep your work safe</span></h2><p data-install-lang="vi">Email, hồ sơ và báo giá cần Internet. Nếu mất kết nối, kiểm tra trạng thái lưu trước khi đóng biểu mẫu. Việc cài ứng dụng không tự kết nối thêm Gmail, Outlook hoặc Google Drive.</p><p data-install-lang="en" hidden>Email, records and quotations need Internet access. If disconnected, check the save status before closing a form. Installing the app does not connect Gmail, Outlook or Google Drive automatically.</p></div>
+      <div><h2><span data-install-lang="vi">Cập nhật & thông báo</span><span data-install-lang="en" hidden>Updates & notifications</span></h2><p data-install-lang="vi">Có phiên bản mới, ứng dụng sẽ cho bạn chọn thời điểm tải lại. Nhắc việc hiển thị trong MerchFlow; thông báo khi đã đóng ứng dụng chỉ có khi hệ thống push được triển khai và bạn cấp quyền.</p><p data-install-lang="en" hidden>When an update is ready, choose when to reload. Reminders appear inside MerchFlow; notifications while the app is closed require a configured push service and your permission.</p></div>
+    </section>
+    <footer class="mf-install-footer"><span data-install-lang="vi">Ứng dụng web cài đặt nội bộ · Quyền truy cập do công ty quản lý.</span><span data-install-lang="en" hidden>Installable internal web app · Access is managed by your company.</span></footer>
+  </main>
+</body>
+</html>

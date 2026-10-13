@@ -42,7 +42,7 @@ export async function mailboxEndpoint(req:Request,db:any,uid:string,actor:string
  const stamp=new Date().toISOString(),payload={...p,verifiedAt:stamp,connection:'verified'},json=JSON.stringify(payload);
  const changes=await db.batch([
   db.prepare('UPDATE records SET payload=?,version=version+1,updated_at=? WHERE id=? AND owner=? AND version=?').bind(json,stamp,row.id,uid,row.version),
-  db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM records WHERE id=? AND owner=? AND version=? AND updated_at=?)').bind(crypto.randomUUID(),uid,row.id,'mailbox_verify',actor,row.payload,json,stamp,row.id,uid,row.version+1,stamp)
+  db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE changes()=1').bind(crypto.randomUUID(),uid,row.id,'mailbox_verify',actor,row.payload,json,stamp)
  ]);
  if(!changes[0].meta.changes)return response({error:'version_conflict'},409);
  return response({ok:true,email:p.email,verifiedAt:stamp});

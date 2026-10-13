@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "MerchFlow",
+  "short_name": "MerchFlow",
+  "description": "Merchandising workspace for apparel teams / Không gian làm việc của đội ngũ merchandise.",
+  "lang": "vi",
+  "start_url": "/workspace#tasks",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#151819",
+  "theme_color": "#151819",
+  "prefer_related_applications": false,
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Công việc / Tasks", "url": "/workspace#tasks", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Hộp thư / Inbox", "url": "/workspace#mail", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

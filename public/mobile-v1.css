@@ -1,0 +1,775 @@
+/* MerchFlow 1.0 compact workspace. Load after the existing workspace styles.
+   These rules apply to working surfaces only; quotation paper stays unchanged. */
+.mf-drawer-close,
+.mf-drawer-backdrop {
+  display: none;
+}
+
+@media screen and (max-width: 900px) {
+  .app {
+    display: block;
+    min-height: 100dvh;
+  }
+
+  .app > main,
+  .content,
+  .panel,
+  .field,
+  .modal-main,
+  .task-card-body,
+  .pagehead > div,
+  .panelhead > div {
+    min-width: 0;
+  }
+
+  body.mf-drawer-open,
+  body:has(dialog[open]) {
+    overflow: hidden;
+  }
+
+  .content {
+    padding: 22px max(16px, env(safe-area-inset-right))
+      max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 10px;
+    height: auto;
+    min-height: 64px;
+    padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+  }
+
+  .topbar .menu {
+    display: inline-grid;
+  }
+
+  .topbar .quiet {
+    display: none;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    font-size: 0;
+    min-width: 0;
+  }
+
+  .breadcrumb > span {
+    display: none;
+  }
+
+  .breadcrumb > strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .top-actions {
+    min-width: 0;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .app .btn,
+  dialog .btn,
+  .app .icon-btn,
+  dialog .icon-btn,
+  .topbar .lang,
+  .topbar .reminder-bell,
+  .task-tab,
+  .studio-layout button,
+  .pilltabs button,
+  .tl-tabs button,
+  .mf-drawer-close {
+    min-height: 44px !important;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  .app .btn,
+  dialog .btn {
+    max-width: 100%;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    padding: 10px 12px;
+  }
+
+  .app .icon-btn,
+  dialog .icon-btn,
+  .topbar .lang,
+  .mf-drawer-close {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .topbar .lang {
+    font-size: 12px;
+  }
+
+  .reminder-bell-label {
+    display: none;
+  }
+
+  .topbar .reminder-bell {
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: var(--mf-viewport-top, 0px);
+    left: 0;
+    z-index: 60;
+    width: min(320px, calc(100vw - 24px));
+    max-width: 100%;
+    height: var(--mf-viewport-height, 100dvh);
+    padding: max(16px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+    background: #1b1e1d;
+    border-right: 1px solid var(--line);
+    transform: translateX(calc(-100% - 2px));
+    visibility: hidden;
+    transition: transform 160ms ease, visibility 160ms;
+    overscroll-behavior: contain;
+  }
+
+  .sidebar.open {
+    left: 0;
+    transform: translateX(0);
+    visibility: visible;
+    background: #1b1e1d;
+  }
+
+  .sidebar .brand {
+    flex-shrink: 0;
+    min-height: 52px;
+    padding: 0 48px 12px 10px;
+  }
+
+  .sidebar #nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 3px 4px 10px 0;
+  }
+
+  .sidebar nav a {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 11px 12px;
+  }
+
+  .sidebar .side-foot {
+    flex-shrink: 0;
+    padding-top: 6px;
+  }
+
+  .sidebar .user b {
+    max-width: 205px;
+    font-size: 12px;
+  }
+
+  .sidebar .user small,
+  .sidebar .private-badge {
+    font-size: 11px;
+  }
+
+  .mf-drawer-close {
+    display: inline-grid;
+    place-items: center;
+    position: absolute;
+    top: max(14px, env(safe-area-inset-top));
+    right: 12px;
+    color: var(--ink);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font: 24px/1 'Segoe UI', Arial, sans-serif;
+  }
+
+  .mf-drawer-backdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    z-index: 59;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: #0d100fb3;
+    touch-action: manipulation;
+  }
+
+  .pagehead,
+  .panelhead,
+  .buyer-head,
+  .daily-strip,
+  .rowline,
+  .mailbox-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .pagehead h1 {
+    font-size: clamp(24px, 4.5vw, 30px);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .pagehead .sub,
+  .notice,
+  .mail-body,
+  .task-description,
+  .mailbox-detail,
+  .department-details .term p,
+  .request-card .sub {
+    font-size: 14px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+
+  .hint,
+  .note-line,
+  .task-date-grid span,
+  .task-context,
+  .task-context span,
+  .task-owner,
+  .deadline-badge,
+  .badge {
+    font-size: 12px;
+  }
+
+  .task-date-grid b,
+  .task-title,
+  .is-done .task-title {
+    font-size: 15px;
+  }
+
+  .app .field input,
+  .app .field select,
+  .app .field textarea,
+  dialog input,
+  dialog select,
+  dialog textarea,
+  .studio-filters input,
+  .studio-filters select,
+  .filters input,
+  .filters select,
+  #mailQuery {
+    max-width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .field label,
+  .studio-filters label,
+  .tl-filters label,
+  .reminder-filter label {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .app textarea,
+  dialog textarea {
+    min-height: 112px;
+    resize: vertical;
+  }
+
+  .buttons,
+  .rowline > div,
+  .mailbox-toolbar > div,
+  .quote-item-heading > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .rowline > div:first-child,
+  .buyer-head > div:first-child,
+  .request-card h3,
+  .sender-line,
+  .mail-row strong,
+  .mail-row small {
+    overflow-wrap: anywhere;
+  }
+
+  .table-wrap,
+  .quote-preview,
+  .tl-gantt,
+  .customer-tabs,
+  .subtabs,
+  .pilltabs,
+  .task-tabs {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .customer-tabs .btn,
+  .subtabs .btn,
+  .pilltabs button,
+  .task-tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .studio-board-head {
+    flex-wrap: wrap;
+  }
+
+  .task-tabs {
+    width: 100%;
+    gap: 14px;
+  }
+
+  .task-tab {
+    font-size: 13px;
+    padding: 10px 2px 12px;
+  }
+
+  .studio-layout {
+    margin-left: auto;
+  }
+
+  .studio-layout button {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .studio-list,
+  .studio-kanban.single .kanban-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .studio-list .task-card-body,
+  .priority-panel .task-card-body {
+    display: block;
+  }
+
+  .studio-list .task-date-grid,
+  .priority-panel .task-date-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-top: 14px;
+  }
+
+  .task-card-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+  }
+
+  .task-card-actions .btn {
+    flex: 1 1 112px;
+    font-size: 13px;
+  }
+
+  .task-title,
+  .reminder-title,
+  .studio-panel-footer .link,
+  .tl-sticky .link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    overflow-wrap: anywhere;
+  }
+
+  .studio-kanban {
+    grid-template-columns: repeat(2, minmax(260px, 85%));
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .studio-kanban.single {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .studio-scan summary,
+  .mailbox-help summary,
+  .quote-seller summary,
+  .tl-event summary {
+    min-height: 44px;
+    align-content: center;
+    font-size: 13px;
+  }
+
+  .studio-scan summary {
+    flex-wrap: wrap;
+  }
+
+  .scan-last {
+    margin-left: 15px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .reminder-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reminder-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .reminder-heading h2,
+  .reminder-heading .btn {
+    font-size: 13px;
+  }
+
+  .reminder-stat {
+    min-height: 78px;
+  }
+
+  .reminder-stat span {
+    font-size: 13px;
+  }
+
+  .studio-quick .buttons,
+  .pagehead > .buttons {
+    width: 100%;
+  }
+
+  .studio-quick .btn,
+  .pagehead > .buttons > .btn {
+    flex: 1 1 130px;
+  }
+
+  #modal,
+  #taskTimeline,
+  #taskReminders {
+    position: fixed;
+    inset: auto 0 auto;
+    top: calc(var(--mf-viewport-top, 0px) + 8px);
+    margin: 0 auto;
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    max-height: calc(var(--mf-viewport-height, 100dvh) - 16px);
+    border-radius: 16px;
+    overscroll-behavior: contain;
+  }
+
+  #modal {
+    height: auto;
+    overflow: auto;
+    scroll-padding: 86px 12px 88px;
+  }
+
+  #taskTimeline {
+    height: calc(var(--mf-viewport-height, 100dvh) - 16px);
+  }
+
+  .modal-head,
+  .modal-foot,
+  .reminders-head,
+  .tl-header {
+    padding: 14px 16px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .modal-head h2,
+  .reminders-head h2,
+  .tl-header h2 {
+    font-size: 20px;
+    line-height: 1.35;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .modal-main,
+  .reminders-body,
+  .tl-body {
+    padding: 16px;
+    min-height: 0;
+    overscroll-behavior: contain;
+  }
+
+  .reminders-body,
+  .tl-body {
+    overflow-y: auto;
+  }
+
+  .modal-foot {
+    flex-wrap: wrap;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .modal-foot > .btn {
+    flex: 1 1 110px;
+  }
+
+  .modal-main .modal-foot {
+    margin: 18px -16px -16px;
+  }
+
+  .tl-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .tl-header > .buttons {
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
+  .tl-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tl-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tl-date-tools,
+  .reminder-foot {
+    flex-wrap: wrap;
+  }
+
+  .tl-date-tools > .buttons {
+    flex-wrap: wrap;
+  }
+
+  .tl-date-tools strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tl-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .tl-tabs button {
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+
+  .tl-bar {
+    top: 24px;
+    min-height: 44px;
+  }
+
+  .tl-complete-pin {
+    top: 12px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .toast {
+    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: fit-content;
+    max-width: calc(100% - 24px);
+    margin: 0 auto;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .panel,
+  .studio-dashboard .panel,
+  .mailbox-card {
+    padding: 16px;
+  }
+
+  .formgrid,
+  .quote-item-fields,
+  .department-filters,
+  .department-details,
+  .quote-list-filters,
+  .tl-filters,
+  .reminder-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .formgrid > .field,
+  .quote-item-fields > .field,
+  .reminder-filter input,
+  .reminder-filter select,
+  .reminder-filter label {
+    grid-column: 1;
+  }
+
+  .studio-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .studio-filters .studio-search,
+  .studio-filters > .btn {
+    grid-column: 1 / -1;
+  }
+
+  .studio-filters > .btn {
+    justify-self: stretch;
+    height: auto;
+  }
+
+  .quote-item-heading {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .quote-item-heading .buttons {
+    margin-left: auto;
+  }
+
+  .quote-template-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .quote-live-total b {
+    margin-left: 0;
+    flex-basis: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .reminder-row {
+    flex-wrap: wrap;
+  }
+
+  .reminder-actions {
+    width: 100%;
+    padding: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .reminder-actions .btn {
+    flex: 1 1 110px;
+  }
+
+  .gmail-connect-banner > .btn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .gmail-connect-steps {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .gmail-connect-intro {
+    align-items: flex-start;
+  }
+
+  .mailbox-panel .panelhead,
+  .mailbox-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mailbox-panel .panelhead .btn {
+    align-self: stretch;
+  }
+
+  .tl-stat {
+    min-width: 0;
+    padding: 10px 8px;
+  }
+
+  .tl-stat span {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .tl-progress {
+    gap: 12px;
+  }
+
+  .tl-ring {
+    width: 56px;
+    height: 56px;
+  }
+
+  .tl-ring::before {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .topbar {
+    grid-template-columns: 44px minmax(0, 1fr);
+    row-gap: 5px;
+  }
+
+  .topbar .breadcrumb {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 0 2px 2px;
+  }
+
+  .top-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .content {
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .studio-filters,
+  .quote-template-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quote-template-art {
+    display: none;
+  }
+
+  .reminder-stat,
+  .reminder-stat.overdue,
+  .reminder-stat.today,
+  .reminder-stat.soon,
+  .reminder-stat.missing {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    padding: 12px !important;
+  }
+
+  .modal-head,
+  .modal-foot,
+  .modal-main,
+  .reminders-head,
+  .reminders-body,
+  .tl-header,
+  .tl-body {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .modal-main .modal-foot {
+    margin-right: -12px;
+    margin-left: -12px;
+  }
+
+  .tl-panel {
+    padding: 12px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+}

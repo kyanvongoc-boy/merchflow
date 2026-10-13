@@ -1,4 +1,5 @@
 import { dailyAccessAllowed } from '@/lib/daily-access';
+import { automationSaveId,reservedRecordId } from '@/lib/automation';
 import { dailyGmail } from '@/lib/google-daily';
 import { googleStart,googleCallback,googleDisconnect,googleConfigured } from '@/lib/google-mail';
 import { mailboxFields,validateMailbox,mailboxEndpoint,checkGmailMailbox,gmailConnector } from '@/lib/mailboxes';
@@ -69,10 +70,13 @@ async function handler(req:Request){try{
  const mailboxResult=await mailboxEndpoint(req,db,uid,email||uid,path,input);if(mailboxResult)return mailboxResult;
  const extra=await operationEndpoint(req,db,(env as any).BUCKET,uid,email,path,input);if(extra)return extra;
  if(path==='records'){
-  const {kind}=input;if(!kinds.has(kind))throw new Fault('invalid_kind');const id=String(input.id||crypto.randomUUID());if(!/^[a-zA-Z0-9_-]{8,80}$/.test(id))throw new Fault('invalid_id');
-  if(kind==='automation'&&id!=='merchflow-automation-config')throw new Fault('invalid_id');
+  const {kind}=input;if(!kinds.has(kind))throw new Fault('invalid_kind');const id=kind==='automation'?await automationSaveId(db,uid):String(input.id||crypto.randomUUID());if(!/^[a-zA-Z0-9_-]{8,80}$/.test(id))throw new Fault('invalid_id');
   const supplied=clean(input.payload),p:any={};for(const k of fields[kind])if(supplied[k]!==undefined)p[k]=supplied[k];validate(kind,p);
-  for(const key of ['caseId','mailId','articleId','buyerId','requestId'])if(p[key]){const parent=await db.prepare('SELECT kind,payload FROM records WHERE id=? AND owner=?').bind(p[key],uid).first();if(!parent||parent.kind!==key.replace('Id',''))throw new Fault('parent_missing');if(kind==='training'&&JSON.parse(parent.payload).status!=='approved')throw new Fault('article_not_approved')}
+  for(const key of ['caseId','mailId','articleId','buyerId','requestId'])if(p[key]){const parent=await db.prepare('SELECT kind,payload,version FROM records WHERE id=? AND owner=?').bind(p[key],uid).first();if(!parent||parent.kind!==key.replace('Id',''))throw new Fault('parent_missing');if(kind==='training'){
+    const article=JSON.parse(parent.payload);if(article.status!=='approved')throw new Fault('article_not_approved');
+    const snapshot:any={};for(const key of ['title','titleEn','body','bodyEn','scope','scopeEn','reviewer','reason'])snapshot[key]=article[key]||'';snapshot.sourceIds=[...(article.sourceIds||[])];snapshot.status='approved';
+    p.articleVersion=parent.version;p.articleSnapshot=snapshot;p.contentSHA=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(snapshot)))),b=>b.toString(16).padStart(2,'0')).join('');p.articleCapturedAt=new Date().toISOString();
+   }}
   for(const assetId of p.attachmentIds||[])if(!await db.prepare("SELECT id FROM records WHERE id=? AND owner=? AND kind='asset'").bind(assetId,uid).first())throw new Fault('invalid_attachment');
   for(const source of p.sourceIds||[])if(!docs.some(d=>d.id===source)&&!await db.prepare('SELECT id FROM records WHERE id=? AND owner=?').bind(source,uid).first())throw new Fault('source_missing');
   if(kind==='buyer'){const matches=await db.prepare("SELECT id,payload FROM records WHERE owner=? AND kind='buyer'").bind(uid).all();if(matches.results.some((v:any)=>v.id!==id&&JSON.parse(v.payload).email.toLowerCase()===p.email.toLowerCase()))throw new Fault('email_exists',409)}
@@ -80,7 +84,8 @@ async function handler(req:Request){try{
   if(kind==='mailbox'){const matches=await db.prepare("SELECT id,payload FROM records WHERE owner=? AND kind='mailbox'").bind(uid).all();if(matches.results.some((v:any)=>v.id!==id&&JSON.parse(v.payload).email===p.email))throw new Fault('email_exists',409)}
   if(['compose','mail','automation'].includes(kind)&&p.mailboxId){const mb=await db.prepare("SELECT payload FROM records WHERE id=? AND owner=? AND kind='mailbox'").bind(p.mailboxId,uid).first();if(!mb)throw new Fault('mailbox_required');const mp=JSON.parse(mb.payload);if(kind==='automation'&&(mp.provider!=='gmail'||!mp.verifiedAt||mp.enabled!=='true'||mp.email!==p.mailbox))throw new Fault('mailbox_unverified');if(kind==='compose')p.senderEmail=mp.email;if(kind==='mail')p.mailboxEmail=mp.email;}
   if(kind==='mail'&&p.messageId){const matches=await db.prepare("SELECT id,payload FROM records WHERE owner=? AND kind='mail'").bind(uid).all();if(matches.results.some((v:any)=>v.id!==id&&JSON.parse(v.payload).messageId===p.messageId&&(JSON.parse(v.payload).mailboxEmail||'')===(p.mailboxEmail||'')))throw new Fault('message_exists',409)}
-  const old=await db.prepare('SELECT * FROM records WHERE id=?').bind(id).first();if(old&&old.owner!==uid)throw new Fault('not_found',404);
+  const old=await db.prepare('SELECT * FROM records WHERE id=?').bind(id).first();if(old&&old.owner!==uid)throw new Fault('not_found',404);if(!old&&kind!=='automation'&&reservedRecordId(id))throw new Fault('reserved_id',400);
+  if(kind==='training'&&old){const before=JSON.parse(old.payload);if(before.articleId!==p.articleId)throw new Fault('article_locked');if(before.articleSnapshot&&before.articleVersion&&before.contentSHA){p.articleSnapshot=before.articleSnapshot;p.articleVersion=before.articleVersion;p.contentSHA=before.contentSHA;p.articleCapturedAt=before.articleCapturedAt||old.created_at;}}
   if(kind==='mailbox'){const before=old?JSON.parse(old.payload):null;const same=before?.email===p.email&&before?.provider===p.provider;p.verifiedAt=same?before.verifiedAt||'':'';p.connection=p.verifiedAt?'verified':'pending';if(same&&before?.connectionMode==='google_oauth'){p.connectionMode='google_oauth';p.draftAccess=before.draftAccess||'false'}else if(before?.connectionMode==='google_oauth')throw new Fault('google_identity_locked',409);}
 
   if(kind==='automation'&&p.enabled==='true'&&!p.mailboxId){const previous=old?JSON.parse(old.payload):null;if(!previous||previous.mailbox!==p.mailbox)throw new Fault('mailbox_required');}
@@ -91,7 +96,7 @@ async function handler(req:Request){try{
   if(kind==='case'&&old&&JSON.parse(old.payload).baseline&&p.baseline!==JSON.parse(old.payload).baseline)throw new Fault('baseline_locked');
   const stamp=new Date().toISOString(),version=old?old.version+1:1;
   const mutation=old?db.prepare('UPDATE records SET payload=?,version=?,updated_at=? WHERE id=? AND owner=? AND version=?').bind(json,version,stamp,id,uid,old.version):db.prepare('INSERT INTO records(id,owner,kind,payload,version,created_at,updated_at) VALUES(?,?,?,?,1,?,?) ON CONFLICT(id) DO NOTHING').bind(id,uid,kind,json,stamp,stamp);
-  const changes=await db.batch([mutation,db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM records WHERE id=? AND owner=? AND updated_at=? AND version=?)').bind(crypto.randomUUID(),uid,id,old?'update':'create',email||uid,old?.payload||'{}',json,stamp,id,uid,stamp,version)]);
+  const changes=await db.batch([mutation,db.prepare('INSERT INTO audit(id,owner,record_id,action,actor,before_json,after_json,at) SELECT ?,?,?,?,?,?,?,? WHERE changes()=1').bind(crypto.randomUUID(),uid,id,old?'update':'create',email||uid,old?.payload||'{}',json,stamp)]);
   if(!changes[0].meta.changes)throw new Fault('version_conflict',409);return reply({id,kind,version,payload:p,created_at:old?.created_at||stamp,updated_at:stamp});
  }
  if(path==='search'){const terms=norm(String(input.query||'').slice(0,300)).split(/\s+/).filter(s=>s.length>1);if(!terms.length)return reply({results:[]});const results=docs.map(d=>{const t=norm(d.text),name=norm(d.name+' '+d.customer);let score=terms.reduce((n,s)=>n+(t.includes(s)?1:0)+(name.includes(s)?3:0),0),page=d.pages.findIndex((p:string)=>terms.some(s=>norm(p).includes(s)));let lines=(d.pages[Math.max(0,page)]||'').split('\n').filter((l:string)=>terms.some(s=>norm(l).includes(s))).slice(0,5).map((x:string)=>x.trim().replace(/\s{3,}/g,' | '));return{...summary(d),score,page:page+1,snippet:lines.join('\n')}}).filter(d=>d.score>0).sort((a,b)=>b.score-a.score).slice(0,15);return reply({results});}
